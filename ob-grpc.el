@@ -146,6 +146,16 @@ in PROTO-FILE and IMPORT-PATHS.  Else return methods under SERVICE."
 		    (nth 1 msg-template)))))
 
 
+(defun ob-grpc--set-header-flag (header)
+  (concat "-H \"" header  "\""))
+
+(defun ob-grpc--headers-or-empty-string ()
+  (let ((headers (org-entry-get nil "GRPC-HEADERS")))
+    (if (eq nil headers)
+        ""
+      headers)))
+
+
 ;;;###autoload
 (defun org-babel-execute:grpc (body params)
   "Execute a grpc call with BODY as request, using grpcurl, with method and endpoint taken from PARAMS."
@@ -153,12 +163,17 @@ in PROTO-FILE and IMPORT-PATHS.  Else return methods under SERVICE."
 	 (import-paths (split-string (org-entry-get nil "PROTO-IMPORT-PATH" t) " "))
 	 (grpc-endpoint (org-entry-get nil "GRPC-ENDPOINT" t))
 	 (plain-text (org-entry-get nil "PLAIN-TEXT" t))
+         (grpc-headers-list (split-string-and-unquote (ob-grpc--headers-or-empty-string)))
+	 (grpc-headers (if (eq grpc-headers-list nil)
+                           '()
+                         grpc-headers-list))
          (method (alist-get :method params)))
     (shell-command-to-string
-     (message "grpcurl %s -proto %s %s -d %s \"%s\" \"%s\""
+     (message "grpcurl %s -proto %s %s %s -d %s \"%s\" \"%s\""
 	      (ob-grpc--concat-imports import-paths)
 	      proto-file
 	      (if (equal plain-text "no") "" "-plaintext")
+              (mapconcat #'ob-grpc--set-header-flag grpc-headers " ")
 	      (prin1-to-string body)
 	      grpc-endpoint
 	      method
