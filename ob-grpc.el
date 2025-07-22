@@ -150,7 +150,7 @@ in PROTO-FILE and IMPORT-PATHS.  Else return methods under SERVICE."
   (concat "-H \"" header  "\""))
 
 (defun ob-grpc--headers-or-empty-string ()
-  (let ((headers (org-entry-get nil "GRPC-HEADERS")))
+  (let ((headers (org-entry-get nil "GRPC-HEADERS" t)))
     (if (eq nil headers)
         ""
       headers)))
